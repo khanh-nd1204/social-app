@@ -1,0 +1,38 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  devtools:
+    add-properties: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_social_dev
+    username: root
+    password: 12042002
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    generate-ddl: true
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+openapi:
+  service:
+    api-docs: social-service
+    server: http://localhost:${server.port}
+    title: Social service
+    version: 1.0.0
+
+jwt:
+  base64-secret: dev
+  access-token-validity-in-seconds: 86400
+  refresh-token-validity-in-seconds: 864000

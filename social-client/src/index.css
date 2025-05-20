@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@import '@fontsource-variable/public-sans';
+
+@layer base {
+    body {
+        font-family: 'Public Sans Variable', sans-serif;
+    }
+}

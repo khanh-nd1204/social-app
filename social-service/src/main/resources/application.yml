@@ -1,0 +1,39 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: social-service
+  profiles:
+    active: @spring.profiles.active@
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
+
+  main:
+    allow-circular-references: true
+
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 10MB
+
+  messages:
+    basename: messages
+    encoding: UTF-8
+
+cors:
+  client:
+    url: http://localhost:${client.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+logging:
+  level:
+    root: INFO
+    web: INFO
