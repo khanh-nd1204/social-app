@@ -8,7 +8,7 @@ services:
     environment:
       - MYSQL_DATABASE=${DB_URL}
       - MYSQL_ROOT=root
-      - MYSQL_PASSWORD=12042002
+      - MYSQL_PASSWORD=${DB_PASSWORD}
     ports:
       - '3306:3306'
     volumes:

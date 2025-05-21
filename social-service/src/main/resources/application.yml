@@ -10,23 +10,35 @@ spring:
     web:
       pageable:
         one-indexed-parameters: true
-
   main:
     allow-circular-references: true
-
   servlet:
     multipart:
       max-file-size: 2MB
       max-request-size: 10MB
-
   messages:
     basename: messages
     encoding: UTF-8
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: ${CALLBACK_URL:http://localhost:${client.port}/call-back}
+        provider:
+          google:
+            token-uri: https://oauth2.googleapis.com/token
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
 
-cors:
-  client:
-    port: 3000
-    url: ${SOCIAL_URL:http://localhost:${cors.client.port}}
+  mail:
+    duration: 300
+
+client:
+  port: 3000
+  url: ${SOCIAL_URL:http://localhost:${cors.client.port}}
 
 management:
   endpoints:
