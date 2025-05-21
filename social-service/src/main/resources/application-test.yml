@@ -5,9 +5,9 @@ spring:
   devtools:
     add-properties: true
   datasource:
-    url: jdbc:mysql://localhost:3306/db_social_test
-    username: root
-    password: 12042002
+    url: ${DB_URL:jdbc:mysql://localhost:3306/social_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:12042002}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     generate-ddl: true
@@ -28,11 +28,11 @@ springdoc:
 openapi:
   service:
     api-docs: social-service
-    server: ${BACKEND_SERVICE:http://localhost:${server.port}}
+    server: ${SOCIAL_SERVICE:http://localhost:${server.port}}
     title: Social service
     version: 1.0.0
 
 jwt:
-  base64-secret: test
-  access-token-validity-in-seconds: 86400
-  refresh-token-validity-in-seconds: 864000
+  secret-key: ${SECRET_KEY:test}
+  access-token-duration: 86400
+  refresh-token-duration: 864000

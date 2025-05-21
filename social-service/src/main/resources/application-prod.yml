@@ -5,9 +5,9 @@ spring:
   devtools:
     add-properties: true
   datasource:
-    url: jdbc:mysql://localhost:3306/db_social_prod
-    username: root
-    password: 12042002
+    url: ${DB_URL:jdbc:mysql://localhost:3306/social_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:12042002}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     generate-ddl: true
@@ -26,7 +26,7 @@ springdoc:
     enabled: false
 
 jwt:
-  base64-secret: prod
-  access-token-validity-in-seconds: 86400
-  refresh-token-validity-in-seconds: 864000
+  secret-key: ${SECRET_KEY:prod}
+  access-token-duration: 86400
+  refresh-token-duration: 864000
 

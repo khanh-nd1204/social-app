@@ -25,7 +25,8 @@ spring:
 
 cors:
   client:
-    url: http://localhost:${client.port}
+    port: 3000
+    url: ${SOCIAL_URL:http://localhost:${cors.client.port}}
 
 management:
   endpoints:
