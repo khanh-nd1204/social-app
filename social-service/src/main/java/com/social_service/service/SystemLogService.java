@@ -10,10 +10,10 @@ import java.util.List;
 
 public interface SystemLogService {
 
-    PageResponse<List<SystemLogResponse>> searchLog(Specification<SystemLogEntity> spec, Pageable pageable)
+    PageResponse<List<SystemLogResponse>> searchLogs(Specification<SystemLogEntity> spec, Pageable pageable)
             throws Exception;
 
     void createLog(String params, String action, String description) throws Exception;
 
-    void clearLogs() throws Exception;
+    void cleanLogs() throws Exception;
 }

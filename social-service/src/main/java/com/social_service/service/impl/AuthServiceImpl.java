@@ -1,5 +1,6 @@
 package com.social_service.service.impl;
 
+import com.social_service.constant.EmailType;
 import com.social_service.constant.Message;
 import com.social_service.constant.Role;
 import com.social_service.exception.NotFoundException;
@@ -8,11 +9,13 @@ import com.social_service.model.entity.InvalidatedTokenEntity;
 import com.social_service.model.entity.RoleEntity;
 import com.social_service.model.entity.UserEntity;
 import com.social_service.model.request.AuthRequest;
+import com.social_service.model.request.EmailRequest;
 import com.social_service.model.response.AuthResponse;
 import com.social_service.repository.InvalidatedTokenRepository;
 import com.social_service.repository.RoleRepository;
 import com.social_service.repository.UserRepository;
 import com.social_service.service.AuthService;
+import com.social_service.service.EmailService;
 import com.social_service.service.SystemLogService;
 import com.social_service.service.UserService;
 import com.social_service.util.SecurityUtil;
@@ -71,6 +74,8 @@ public class AuthServiceImpl implements AuthService {
 
     PasswordEncoder passwordEncoder;
 
+    EmailService emailService;
+
     @Value("${jwt.access-token-duration}")
     @NonFinal
     Long accessTokenDuration;
@@ -125,7 +130,7 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = securityUtil.createToken(user, refreshTokenDuration);
         userService.updateToken(user.getId(), refreshToken);
 
-        systemLogService.createLog(user.getEmail(), Message.LOGIN.getKey(), Message.USER_LOGIN.getKey());
+        systemLogService.createLog(null, Message.LOGIN.getKey(), Message.LOGIN_SUCCESS.getKey());
 
         return AuthResponse.builder()
                 .accessToken(securityUtil.createToken(user, accessTokenDuration))
@@ -142,19 +147,14 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException(Translator.toLocale(Message.EMAIL_EXISTS.getKey(), null));
         }
 
-        if (userRepository.existsByPhone(request.getPhone())) {
-            throw new BadRequestException(Translator.toLocale(Message.PHONE_EXISTS.getKey(), null));
-        }
-
         UserEntity user = UserEntity.builder()
                 .name(request.getName())
                 .email(request.getEmail())
-                .address(request.getAddress())
-                .phone(request.getPhone())
                 .gender(request.getGender())
                 .birthDate(request.getBirthDate())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .verified(false)
+                .active(true)
                 .build();
 
         RoleEntity role = roleRepository.findByName(Role.USER.getName()).orElseThrow(() ->
@@ -167,13 +167,66 @@ public class AuthServiceImpl implements AuthService {
             throw new DataIntegrityViolationException(Translator.toLocale(Message.USER_EXISTS.getKey(), null));
         }
 
-        generateOTPAndEmail(user);
+        generateOTPAndEmail(user, EmailType.REGISTER);
+    }
+
+    @Override
+    @Transactional
+    public void verify(AuthRequest request) throws Exception {
+        log.info("Verify request: {}", request.toString());
+
+        UserEntity user = userRepository.findByEmail(request.getEmail()).orElseThrow(() ->
+                new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null))
+        );
+
+        if (user.getVerified()) {
+            throw new BadRequestException(Translator.toLocale(Message.USER_VERIFIED.getKey(), null));
+        }
+
+        if (!user.getActive()) {
+            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
+        }
+
+        verifyOtp(user, request.getOtp());
+
+        user.setVerified(true);
+        userRepository.save(user);
+
+        systemLogService.createLog(user.getName(), Message.VERIFY.getKey(), Message.USER_VERIFIED_SUCCESS.getKey());
+    }
+
+    @Override
+    @Transactional
+    public void sendOTP(EmailRequest request) throws Exception {
+        log.info("Send OTP email request: {}", request.toString());
+
+        UserEntity user = userRepository.findByEmail(request.getRecipient()).orElseThrow(() ->
+                new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null))
+        );
+
+        if (!user.getActive()) {
+            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
+        }
+
+        if (user.getVerified() && request.getType().equals(EmailType.VERIFY_EMAIL)) {
+            throw new BadRequestException(Translator.toLocale(Message.USER_VERIFIED.getKey(), null));
+        }
+
+        if (!user.getVerified() && request.getType().equals(EmailType.RESET_PASSWORD)) {
+            throw new BadRequestException(Translator.toLocale(Message.USER_UNVERIFIED.getKey(), null));
+        }
+
+        generateOTPAndEmail(user, request.getType());
     }
 
     @Override
     @Transactional
     public void resetPassword(AuthRequest request) throws Exception {
         log.info("Reset password request: {}", request.toString());
+
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException(Translator.toLocale(Message.PASSWORD_NOT_MATCHED.getKey(), null));
+        }
 
         UserEntity user = userRepository.findByEmail(request.getEmail()).orElseThrow(() ->
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
@@ -185,7 +238,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
 
-        systemLogService.createLog(user.getEmail(), Message.RESET_PASSWORD.getKey(), Message.USER_RESET_PASSWORD.getKey());
+        systemLogService.createLog(null, Message.PASSWORD_RESET.getKey(), Message.PASSWORD_CHANGE_SUCCESS.getKey());
     }
 
     @Override
@@ -233,7 +286,7 @@ public class AuthServiceImpl implements AuthService {
                 InvalidatedTokenEntity.builder().id(jwt.getId()).expiredAt(jwt.getExpiresAt()).build();
         invalidatedTokenRepository.save(invalidatedToken);
 
-        systemLogService.createLog(user.getEmail(), Message.LOGOUT.getKey(), Message.USER_LOGOUT.getKey());
+        systemLogService.createLog(null, Message.LOGOUT.getKey(), Message.LOGOUT_SUCCESS.getKey());
     }
 
     @Override
@@ -338,7 +391,7 @@ public class AuthServiceImpl implements AuthService {
 
     public void checkUserValid(UserEntity user) {
         if (!user.getActive()) {
-            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCK.getKey(), null));
+            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
         }
 
         if (!user.getVerified()) {
@@ -346,14 +399,23 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    @Transactional
-    public void generateOTPAndEmail(UserEntity user) throws Exception {
+    public void generateOTPAndEmail(UserEntity user, EmailType type) throws Exception {
         log.info("Generate OTP and email");
 
         int otp = new Random().nextInt(900000) + 100000;
         Instant otpDuration = Instant.now().plusSeconds(emailDuration);
 
-//        emailService.createEmail(user.getEmail(), "OTP Authentication", "otp-template", otpDuration);
+        EmailRequest request = EmailRequest.builder()
+                .recipient(user.getEmail())
+                .subject("OTP Authentication")
+                .template("otp-template")
+                .duration(otpDuration)
+                .type(type)
+                .build();
+
+        log.info("Sending email request: {}", request.toString());
+
+        emailService.saveEmail(request);
 
         user.setOtp(otp);
         user.setOtpDuration(otpDuration);
@@ -362,10 +424,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     public void verifyOtp(UserEntity user, int enteredOtp) throws Exception {
-        log.info("Verify OTP");
+        log.info("Verify OTP: {}, enteredOtp: {}", user.getOtp(), enteredOtp);
 
         if (user.getOtp() == null || !user.getOtp().equals(enteredOtp)) {
-            throw new BadRequestException(Translator.toLocale(Message.INVALID_OTP.getKey(), null));
+            throw new BadRequestException(Translator.toLocale(Message.OTP_INVALID.getKey(), null));
         }
 
         if (user.getOtpDuration().isBefore(Instant.now())) {

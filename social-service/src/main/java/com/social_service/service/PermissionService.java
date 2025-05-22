@@ -15,7 +15,7 @@ public interface PermissionService {
 
     void updatePermission(PermissionRequest request) throws Exception;
 
-    PageResponse<List<PermissionResponse>> searchPermission(Specification<PermissionEntity> spec, Pageable pageable)
+    PageResponse<List<PermissionResponse>> searchPermissions(Specification<PermissionEntity> spec, Pageable pageable)
             throws Exception;
 
     PermissionResponse getPermissionById(Integer id) throws Exception;

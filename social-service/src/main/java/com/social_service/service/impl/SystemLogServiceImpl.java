@@ -31,7 +31,7 @@ public class SystemLogServiceImpl implements SystemLogService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<List<SystemLogResponse>> searchLog(Specification<SystemLogEntity> spec, Pageable pageable) throws Exception {
+    public PageResponse<List<SystemLogResponse>> searchLogs(Specification<SystemLogEntity> spec, Pageable pageable) throws Exception {
         log.info("Searching log: {}", spec.toString());
 
         Page<SystemLogEntity> pageData = systemLogRepository.findAll(spec, pageable);
@@ -69,9 +69,9 @@ public class SystemLogServiceImpl implements SystemLogService {
     }
 
     @Override
-    public void clearLogs() throws Exception {
+    public void cleanLogs() throws Exception {
         Instant instant = Instant.now().minus(15, ChronoUnit.DAYS);
         systemLogRepository.deleteByCreatedAtBefore(instant);
-        createLog(null, Message.CLEAN.getKey(), Message.CLEAN_LOG.getKey());
+        createLog(null, Message.CLEAN.getKey(), Message.CLEAN_SUCCESS.getKey());
     }
 }

@@ -21,12 +21,12 @@ public class PermissionRequest {
     Integer id;
 
     @NotBlank(groups = {OnCreate.class, OnUpdate.class}, message = "{permission_name.required}")
-    @Size(min = 10, max = 100, message = "{permission_name.length}")
+    @Size(min = 6, max = 100, message = "{permission_name.length}")
     @JsonDeserialize(using = StringDeserializer.class)
     String name;
 
     @NotBlank(groups = {OnCreate.class, OnUpdate.class}, message = "{api_path.required}")
-    @Size(min = 5, max = 100, message = "{api_path.length}")
+    @Size(min = 2, max = 100, message = "{api_path.length}")
     @JsonDeserialize(using = StringDeserializer.class)
     String apiPath;
 

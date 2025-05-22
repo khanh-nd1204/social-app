@@ -24,7 +24,6 @@ public class UserResponse {
     Gender gender;
     String bio;
     String avatar;
-    String googleId;
     String roleName;
     @JsonFormat(pattern = "HH:mm:ss dd/MM/yyyy", timezone = "GMT+7")
     Instant createdAt;

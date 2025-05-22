@@ -15,7 +15,7 @@ public interface RoleService {
 
     void updateRole(RoleRequest request) throws Exception;
 
-    PageResponse<List<RoleResponse>> searchRole(Specification<RoleEntity> spec, Pageable pageable) throws Exception;
+    PageResponse<List<RoleResponse>> searchRoles(Specification<RoleEntity> spec, Pageable pageable) throws Exception;
 
     RoleResponse getRoleById(Integer id) throws Exception;
 

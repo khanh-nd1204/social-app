@@ -1,11 +1,9 @@
 package com.social_service.model.entity;
 
-import com.social_service.util.SecurityUtil;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
 import java.util.List;
 
 @Entity
@@ -16,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RoleEntity {
+public class RoleEntity extends BaseEntity {
     @Id
     @Column(name = "id", nullable = false, unique = true, updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,18 +26,6 @@ public class RoleEntity {
     @Column(name = "description", nullable = false, length = 100)
     String description;
 
-    @Column(name = "created_at", updatable = false)
-    Instant createdAt;
-
-    @Column(name = "created_by", updatable = false)
-    String createdBy;
-
-    @Column(name = "updated_at")
-    Instant updatedAt;
-
-    @Column(name = "updated_by")
-    String updatedBy;
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "role_permissions",
@@ -49,16 +35,4 @@ public class RoleEntity {
 
     @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
     List<UserEntity> users;
-
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = Instant.now();
-        this.createdBy = SecurityUtil.getCurrentUserLogin().orElse("SYSTEM");
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = Instant.now();
-        this.updatedBy = SecurityUtil.getCurrentUserLogin().orElse("SYSTEM");
-    }
 }

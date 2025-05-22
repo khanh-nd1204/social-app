@@ -24,7 +24,7 @@ public class RoleRequest {
     Integer id;
 
     @NotBlank(groups = {OnCreate.class}, message = "{role_name.required}")
-    @Size(min = 5, max = 100, message = "{role_name.length}")
+    @Size(min = 6, max = 100, message = "{role_name.length}")
     @JsonDeserialize(using = StringDeserializer.class)
     String name;
 

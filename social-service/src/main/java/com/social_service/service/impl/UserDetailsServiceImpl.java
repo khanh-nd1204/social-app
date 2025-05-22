@@ -30,7 +30,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 new BadCredentialsException(Translator.toLocale(Message.ACCOUNT_INVALID.getKey(), null)));
 
         if (!user.getActive()) {
-            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCK.getKey(), null));
+            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
         }
 
         if (!user.getVerified()) {

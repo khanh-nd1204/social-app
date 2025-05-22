@@ -1,7 +1,6 @@
 package com.social_service.model.entity;
 
 import com.social_service.constant.Gender;
-import com.social_service.util.SecurityUtil;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -17,7 +16,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserEntity {
+public class UserEntity extends BaseEntity {
     @Id
     @Column(name = "id", nullable = false, unique = true, updatable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -45,6 +44,7 @@ public class UserEntity {
     Boolean verified;
 
     @Column(name = "gender")
+    @Enumerated(EnumType.STRING)
     Gender gender;
 
     @Column(name = "bio", length = 1000)
@@ -65,34 +65,10 @@ public class UserEntity {
     @Column(name = "google_id")
     String googleId;
 
-    @Column(name = "created_at", updatable = false)
-    Instant createdAt;
-
-    @Column(name = "created_by", updatable = false)
-    String createdBy;
-
-    @Column(name = "updated_at")
-    Instant updatedAt;
-
-    @Column(name = "updated_by")
-    String updatedBy;
-
     @Column(name = "active", nullable = false)
     Boolean active;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     RoleEntity role;
-
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = Instant.now();
-        this.createdBy = SecurityUtil.getCurrentUserLogin().orElse("SYSTEM");
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = Instant.now();
-        this.updatedBy = SecurityUtil.getCurrentUserLogin().orElse("SYSTEM");
-    }
 }

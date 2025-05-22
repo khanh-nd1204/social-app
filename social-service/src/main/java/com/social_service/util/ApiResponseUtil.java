@@ -9,14 +9,16 @@ public class ApiResponseUtil {
     // Trả về response với dữ liệu thành công
     public static <T> ResponseEntity<ApiResponse<T>> buildSuccessResponse(
             HttpStatus status, Object message, T data) {
-        return ResponseEntity.status(status)
-                .body(new ApiResponse<>(status.value(), message, data, null));
+        return ResponseEntity
+                .status(status)
+                .body(ApiResponse.<T>builder().code(status.value()).message(message).data(data).build());
     }
 
     // Trả về response với lỗi
     public static <T> ResponseEntity<ApiResponse<T>> buildErrorResponse(
             HttpStatus status, Object message, String error) {
-        return ResponseEntity.status(status)
-                .body(new ApiResponse<>(status.value(), message, null, error));
+        return ResponseEntity
+                .status(status)
+                .body(ApiResponse.<T>builder().code(status.value()).message(message).error(error).build());
     }
 }

@@ -5,8 +5,7 @@ import lombok.Getter;
 @Getter
 public enum User {
     ADMIN("admin@test.com", "123456", "Admin"),
-    USER("user@test.com", "123456", "User"),
-    ;
+    USER("user@test.com", "123456", "User");
 
     private final String email;
     private final String password;

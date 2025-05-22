@@ -1,8 +1,8 @@
 package com.social_service.service.impl;
 
 import com.social_service.constant.Message;
+import com.social_service.constant.User;
 import com.social_service.exception.NotFoundException;
-import com.social_service.exception.UnauthorizedException;
 import com.social_service.mapper.UserMapper;
 import com.social_service.model.entity.RoleEntity;
 import com.social_service.model.entity.UserEntity;
@@ -11,10 +11,8 @@ import com.social_service.model.response.PageResponse;
 import com.social_service.model.response.UserResponse;
 import com.social_service.repository.RoleRepository;
 import com.social_service.repository.UserRepository;
-import com.social_service.service.AuthService;
 import com.social_service.service.SystemLogService;
 import com.social_service.service.UserService;
-import com.social_service.util.SecurityUtil;
 import com.social_service.util.Translator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +45,6 @@ public class UserServiceImpl implements UserService {
 
     SystemLogService systemLogService;
 
-    AuthService authService;
-
     @Override
     @Transactional
     public UserResponse createUser(UserRequest request) throws Exception {
@@ -77,7 +73,7 @@ public class UserServiceImpl implements UserService {
             throw new DataIntegrityViolationException(Translator.toLocale(Message.USER_EXISTS.getKey(), null));
         }
 
-        systemLogService.createLog(user.getEmail(), Message.CREATE.getKey(), Message.USER_CREATE.getKey());
+        systemLogService.createLog(user.getEmail(), Message.CREATE.getKey(), Message.USER_CREATE_SUCCESS.getKey());
 
         return userMapper.toResponse(user);
     }
@@ -103,7 +99,7 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        systemLogService.createLog(user.getEmail(), Message.UPDATE.getKey(), Message.USER_UPDATE.getKey());
+        systemLogService.createLog(user.getEmail(), Message.UPDATE.getKey(), Message.USER_UPDATE_SUCCESS.getKey());
     }
 
     @Override
@@ -119,7 +115,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<List<UserResponse>> searchUser(Specification<UserEntity> spec, Pageable pageable) throws Exception {
+    public PageResponse<List<UserResponse>> searchUsers(Specification<UserEntity> spec, Pageable pageable) throws Exception {
         log.info("Searching user {}", spec.toString());
 
         Specification<UserEntity> users =
@@ -144,13 +140,17 @@ public class UserServiceImpl implements UserService {
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
 
         if (!user.getActive()) {
-            throw new BadRequestException(Translator.toLocale(Message.USER_LOCKED.getKey(), null));
+            throw new BadRequestException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
+        }
+
+        if (user.getEmail().equals(User.ADMIN.getEmail())) {
+            throw new BadRequestException(Translator.toLocale(Message.USER_LOCK_FAILED.getKey(), null));
         }
 
         user.setActive(false);
         userRepository.save(user);
 
-        systemLogService.createLog(user.getEmail(), Message.LOCK.getKey(), Message.USER_LOCKED.getKey());
+        systemLogService.createLog(user.getEmail(), Message.LOCK.getKey(), Message.USER_LOCK_SUCCESS.getKey());
     }
 
     @Override
@@ -160,13 +160,13 @@ public class UserServiceImpl implements UserService {
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
 
         if (user.getActive()) {
-            throw new BadRequestException(Translator.toLocale(Message.USER_UNLOCKED.getKey(), null));
+            throw new BadRequestException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
         }
 
         user.setActive(false);
         userRepository.save(user);
 
-        systemLogService.createLog(user.getEmail(), Message.UNLOCK.getKey(), Message.USER_UNLOCKED.getKey());
+        systemLogService.createLog(user.getEmail(), Message.UNLOCK.getKey(), Message.USER_UNLOCK_SUCCESS.getKey());
     }
 
     @Override
@@ -221,19 +221,10 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        systemLogService.createLog(user.getEmail(), Message.CHANGE_PASSWORD.getKey(), Message.USER_CHANGE_PASSWORD.getKey());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public UserResponse getUserInfo() throws Exception {
-        String email = SecurityUtil.getCurrentUserLogin().orElseThrow(() ->
-                new UnauthorizedException(Translator.toLocale(Message.UNAUTHORIZED.getKey(), null)));
-
-        UserEntity user = getUserByEmail(email);
-
-        //checkUserValid
-
-        return userMapper.toResponse(user);
+        systemLogService.createLog(
+                null,
+                Message.PASSWORD_CHANGE.getKey(),
+                Message.PASSWORD_CHANGE_SUCCESS.getKey()
+        );
     }
 }

@@ -7,7 +7,6 @@ import com.social_service.validation.constraint.BirthDate;
 import com.social_service.validation.group.OnChangePassword;
 import com.social_service.validation.group.OnCreate;
 import com.social_service.validation.group.OnUpdate;
-import com.social_service.validation.group.OnVerify;
 import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,29 +20,20 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserRequest {
 
-    @NotBlank(
-            groups = {OnUpdate.class, OnChangePassword.class},
-            message = "{id.required}"
-    )
+    @NotBlank(groups = {OnUpdate.class, OnChangePassword.class}, message = "{id.required}")
     String id;
 
     @NotBlank(groups = {OnCreate.class, OnUpdate.class}, message = "{user_name.required}")
-    @Size(min = 5, max = 100, message = "{user_name.length}")
+    @Size(min = 6, max = 100, message = "{user_name.length}")
     @JsonDeserialize(using = StringDeserializer.class)
     String name;
 
-    @NotBlank(
-            groups = {OnCreate.class, OnVerify.class},
-            message = "email.required}"
-    )
+    @NotBlank(groups = OnCreate.class, message = "email.required}")
     @Email(message = "{email.invalid}")
     @JsonDeserialize(using = StringDeserializer.class)
     String email;
 
-    @NotBlank(
-            groups = OnCreate.class,
-            message = "{password.required}"
-    )
+    @NotBlank(groups = OnCreate.class, message = "{password.required}")
     @Size(min = 6, max = 32, message = "{password.length}")
     String password;
 
@@ -87,9 +77,4 @@ public class UserRequest {
     @NotBlank(groups = OnChangePassword.class, message = "{confirm_password.required}")
     @Size(min = 6, max = 32, message = "{confirm_password.length}")
     String confirmPassword;
-
-    @NotNull(groups = OnVerify.class, message = "{otp.required}")
-    @Min(value = 100000, message = "{otp.length}")
-    @Max(value = 999999, message = "{otp.length}")
-    Integer otp;
 }

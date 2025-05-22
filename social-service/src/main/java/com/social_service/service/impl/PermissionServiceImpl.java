@@ -71,7 +71,7 @@ public class PermissionServiceImpl implements PermissionService {
             throw new DataIntegrityViolationException(Translator.toLocale(Message.PERMISSION_EXISTS.getKey(), null));
         }
 
-        systemLogService.createLog(permission.getName(), Message.CREATE.getKey(), Message.PERMISSION_CREATE.getKey());
+        systemLogService.createLog(permission.getName(), Message.CREATE.getKey(), Message.PERMISSION_CREATE_SUCCESS.getKey());
 
         return permissionMapper.toResponse(permission);
     }
@@ -99,12 +99,12 @@ public class PermissionServiceImpl implements PermissionService {
         permissionMapper.updateEntity(permission, request);
         permissionRepository.save(permission);
 
-        systemLogService.createLog(permission.getName(), Message.UPDATE.getKey(), Message.PERMISSION_UPDATE.getKey());
+        systemLogService.createLog(permission.getName(), Message.UPDATE.getKey(), Message.PERMISSION_UPDATE_SUCCESS.getKey());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<List<PermissionResponse>> searchPermission(Specification<PermissionEntity> spec, Pageable pageable) throws Exception {
+    public PageResponse<List<PermissionResponse>> searchPermissions(Specification<PermissionEntity> spec, Pageable pageable) throws Exception {
         log.info("Searching permission: {}", spec.toString());
 
         Page<PermissionEntity> pageData = permissionRepository.findAll(spec, pageable);
@@ -142,6 +142,6 @@ public class PermissionServiceImpl implements PermissionService {
 
         permissionRepository.deleteById(id);
 
-        systemLogService.createLog(permission.getName(), Message.DELETE.getKey(), Message.PERMISSION_DELETE.getKey());
+        systemLogService.createLog(permission.getName(), Message.DELETE.getKey(), Message.PERMISSION_DELETE_SUCCESS.getKey());
     }
 }

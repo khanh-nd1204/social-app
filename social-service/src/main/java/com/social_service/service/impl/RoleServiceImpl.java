@@ -65,7 +65,7 @@ public class RoleServiceImpl implements RoleService {
             throw new DataIntegrityViolationException(Translator.toLocale(Message.ROLE_EXISTS.getKey(), null));
         }
 
-        systemLogService.createLog(role.getName(), Message.CREATE.getKey(), Message.ROLE_CREATE.getKey());
+        systemLogService.createLog(role.getName(), Message.CREATE.getKey(), Message.ROLE_CREATE_SUCCESS.getKey());
 
         return roleMapper.toResponse(role);
     }
@@ -92,12 +92,12 @@ public class RoleServiceImpl implements RoleService {
 
         roleRepository.save(role);
 
-        systemLogService.createLog(role.getName(), Message.UPDATE.getKey(), Message.ROLE_UPDATE.getKey());
+        systemLogService.createLog(role.getName(), Message.UPDATE.getKey(), Message.ROLE_UPDATE_SUCCESS.getKey());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<List<RoleResponse>> searchRole(Specification<RoleEntity> spec, Pageable pageable) throws Exception {
+    public PageResponse<List<RoleResponse>> searchRoles(Specification<RoleEntity> spec, Pageable pageable) throws Exception {
         log.info("Searching role: {}", spec.toString());
 
         Page<RoleEntity> pageData = roleRepository.findAll(spec, pageable);
@@ -131,11 +131,11 @@ public class RoleServiceImpl implements RoleService {
         );
 
         if (PROTECTED_ROLES.contains(role.getName()) || role.getUsers() != null && !role.getUsers().isEmpty()) {
-            throw new BadRequestException(Translator.toLocale(Message.DELETE_FAIL.getKey(), null));
+            throw new BadRequestException(Translator.toLocale(Message.ROLE_DELETE_FAIL.getKey(), null));
         }
 
         roleRepository.deleteById(id);
 
-        systemLogService.createLog(role.getName(), Message.DELETE.getKey(), Message.ROLE_DELETE.getKey());
+        systemLogService.createLog(role.getName(), Message.DELETE.getKey(), Message.ROLE_DELETE_SUCCESS.getKey());
     }
 }

@@ -17,7 +17,7 @@ public interface UserService {
 
     UserResponse getUserById(String id) throws Exception;
 
-    PageResponse<List<UserResponse>> searchUser(Specification<UserEntity> spec, Pageable pageable) throws Exception;
+    PageResponse<List<UserResponse>> searchUsers(Specification<UserEntity> spec, Pageable pageable) throws Exception;
 
     void lockUser(String id) throws Exception;
 
@@ -30,6 +30,4 @@ public interface UserService {
     UserEntity getUserByEmailAndRefreshToken(String email, String refreshToken);
 
     void changePassword(UserRequest request) throws Exception;
-
-    UserResponse getUserInfo() throws Exception;
 }

@@ -1,6 +1,7 @@
 package com.social_service.service;
 
 import com.social_service.model.request.AuthRequest;
+import com.social_service.model.request.EmailRequest;
 import com.social_service.model.response.AuthResponse;
 import org.springframework.http.ResponseCookie;
 
@@ -9,6 +10,10 @@ public interface AuthService {
     AuthResponse login(AuthRequest request) throws Exception;
 
     void register(AuthRequest request) throws Exception;
+
+    void verify(AuthRequest request) throws Exception;
+
+    void sendOTP(EmailRequest request) throws Exception;
 
     void resetPassword(AuthRequest request) throws Exception;
 
