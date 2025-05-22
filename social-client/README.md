@@ -6,10 +6,7 @@
 
 - ✅ [Node.js (v20+)](https://nodejs.org/)
 - ✅ [Yarn](https://classic.yarnpkg.com/lang/en/) hoặc [npm](https://www.npmjs.com/)
-- ✅ [VS Code](https://code.visualstudio.com/) (khuyên dùng) với các extension như:
-    - Tailwind CSS IntelliSense
-    - ESLint
-    - Prettier
+- ✅ [VS Code](https://code.visualstudio.com/)
 
 ---
 
@@ -17,14 +14,14 @@
 
 Dự án sử dụng các công nghệ sau:
 
-- **Vite** – Trình bundler siêu nhanh
+- **Vite** 
 - **React 19+**
-- **Tailwind CSS** – Utility-first CSS framework
-- **Material UI (MUI)** – Bộ component UI hiện đại
-- **Zustand** – State management đơn giản, nhẹ
-- **React Router DOM** – Routing cho SPA
-- **Axios** – Giao tiếp API
-- **ESLint + Prettier** – Định dạng và lint code
+- **Tailwind CSS**
+- **Material UI (MUI)**
+- **Zustand**
+- **React Router DOM**
+- **Axios**
+- **ESLint + Prettier**
 
 ---
 
