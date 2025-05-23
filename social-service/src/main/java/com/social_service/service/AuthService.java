@@ -25,5 +25,5 @@ public interface AuthService {
 
     AuthResponse loginGoogleCallBack(String code) throws Exception;
 
-    ResponseCookie buildRefreshTokenCookie(String refreshToken) throws Exception;
+    ResponseCookie buildRefreshTokenCookie(String refreshToken, Long duration) throws Exception;
 }

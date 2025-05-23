@@ -18,7 +18,7 @@ public interface UserRepository extends JpaRepository<UserEntity, String>, JpaSp
 
     Optional<UserEntity> findByPhone(String phone);
 
-    Optional<UserEntity> findByEmailAndRefreshToken(String email, String refreshToken);
+    Optional<UserEntity> findByRefreshToken(String refreshToken);
 
     Optional<UserEntity> findByRoleName(String roleName);
 }

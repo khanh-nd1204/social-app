@@ -37,8 +37,9 @@ public class SystemLogServiceImpl implements SystemLogService {
         Page<SystemLogEntity> pageData = systemLogRepository.findAll(spec, pageable);
 
         List<SystemLogResponse> systemLogResponses = pageData.getContent().stream().map(log -> {
-            String translatedDesc = Translator.toLocale(log.getDescription(), new Object[]{log.getParams()});
-            String translatedAction = Translator.toLocale(log.getAction(), new Object[]{log.getParams()});
+            String translatedDesc = Translator.toLocale(log.getDescription(), log.getParams());
+
+            String translatedAction = Translator.toLocale(log.getAction(), null);
 
             return SystemLogResponse.builder()
                     .id(log.getId())
@@ -58,11 +59,11 @@ public class SystemLogServiceImpl implements SystemLogService {
     }
 
     @Override
-    public void createLog(String params, String action, String description) throws Exception {
+    public void createLog(Object params, String action, String description) throws Exception {
         SystemLogEntity log = SystemLogEntity.builder()
                 .action(action)
                 .description(description)
-                .params(params)
+                .params(String.valueOf(params))
                 .build();
 
         systemLogRepository.save(log);

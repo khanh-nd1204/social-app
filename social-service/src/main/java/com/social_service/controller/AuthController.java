@@ -18,6 +18,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -34,19 +36,23 @@ public class AuthController {
 
     AuthService authService;
 
+    @Value("${jwt.refresh-token-duration}")
+    @NonFinal
+    Long refreshTokenDuration;
+
     @Operation(summary = "Đăng nhập", description = "Trả về token sau khi đăng nhập thành công")
     @PostMapping(path = "/public/login", headers = "apiVersion=v1.0")
     public ResponseEntity<ApiResponse<Object>> login(@Validated(OnLogin.class) @RequestBody AuthRequest request)
             throws Exception {
         AuthResponse authResponse = authService.login(request);
-
         ApiResponse<Object> res =
                 ApiResponse.builder()
                         .code(HttpStatus.OK.value())
                         .message(Translator.toLocale(Message.LOGIN_SUCCESS.getKey(), null))
+                        .data(authResponse)
                         .build();
 
-        ResponseCookie springCookie = authService.buildRefreshTokenCookie(authResponse.getRefreshToken());
+        ResponseCookie springCookie = authService.buildRefreshTokenCookie(authResponse.getRefreshToken(), refreshTokenDuration);
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, springCookie.toString()).body(res);
     }
@@ -56,7 +62,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> register(
             @Validated(OnRegister.class) @RequestBody AuthRequest request) throws Exception {
         authService.register(request);
-
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.CREATED,
                 Translator.toLocale(Message.REGISTER_SUCCESS.getKey(), null),
@@ -65,19 +70,19 @@ public class AuthController {
     }
 
     @Operation(summary = "Làm mới token", description = "Trả về access token và refresh token mới")
-    @PostMapping(path = "/public/refresh", headers = "apiVersion=v1.0")
+    @GetMapping(path = "/public/refresh", headers = "apiVersion=v1.0")
     public ResponseEntity<ApiResponse<Object>> refreshToken(@CookieValue(name = "refreshToken") String refreshToken)
             throws Exception {
         AuthResponse authResponse = authService.refreshToken(refreshToken);
-
         ApiResponse<Object> res =
                 ApiResponse.builder()
                         .code(HttpStatus.OK.value())
                         .message(Translator.toLocale(Message.REFRESH_SUCCESS.getKey(), null))
+                        .data(authResponse)
                         .build();
 
         ResponseCookie springCookie =
-                authService.buildRefreshTokenCookie(authResponse.getRefreshToken());
+                authService.buildRefreshTokenCookie(authResponse.getRefreshToken(), refreshTokenDuration);
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, springCookie.toString()).body(res);
     }
@@ -87,17 +92,16 @@ public class AuthController {
             description = "Đăng xuất tài khoản khỏi hệ thống",
             security = @SecurityRequirement(name = "bearerToken")
     )
-    @PostMapping(path = "/public/logout", headers = "apiVersion=v1.0")
+    @PostMapping(path = "/auth/logout", headers = "apiVersion=v1.0")
     public ResponseEntity<ApiResponse<Object>> logout() throws Exception {
         authService.logout();
-
         ApiResponse<Object> res =
                 ApiResponse.builder()
                         .code(HttpStatus.OK.value())
                         .message(Translator.toLocale(Message.LOGOUT_SUCCESS.getKey(), null))
                         .build();
 
-        ResponseCookie springCookie = authService.buildRefreshTokenCookie("");
+        ResponseCookie springCookie = authService.buildRefreshTokenCookie("", 0L);
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, springCookie.toString()).body(res);
     }
@@ -107,7 +111,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> resetPassword(
             @Validated(OnResetPassword.class) @RequestBody AuthRequest request) throws Exception {
         authService.resetPassword(request);
-
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.OK,
                 Translator.toLocale(Message.PASSWORD_RESET_SUCCESS.getKey(), null),
@@ -144,7 +147,7 @@ public class AuthController {
         authService.sendOTP(request);
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.OK,
-                Translator.toLocale(Message.EMAIL_SEND_SUCCESS.getKey(), null),
+                Translator.toLocale(Message.OTP_SEND_SUCCESS.getKey(), null),
                 null
         );
     }
@@ -156,7 +159,7 @@ public class AuthController {
         authService.verify(request);
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.OK,
-                Translator.toLocale(Message.USER_VERIFIED_SUCCESS.getKey(), null),
+                Translator.toLocale(Message.ACCOUNT_VERIFIED_SUCCESS.getKey(), null),
                 null
         );
     }

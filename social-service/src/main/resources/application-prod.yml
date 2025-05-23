@@ -26,7 +26,7 @@ springdoc:
     enabled: false
 
 jwt:
-  secret-key: ${SECRET_KEY:prod}
+  secret-key: ${SECRET_KEY}
   access-token-duration: 86400
   refresh-token-duration: 864000
 

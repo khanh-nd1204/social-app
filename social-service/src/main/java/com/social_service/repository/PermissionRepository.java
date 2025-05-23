@@ -1,10 +1,12 @@
 package com.social_service.repository;
 
 import com.social_service.model.entity.PermissionEntity;
+import com.social_service.model.entity.RoleEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,4 +19,6 @@ public interface PermissionRepository extends JpaRepository<PermissionEntity, In
     Optional<PermissionEntity> findByName(String name);
 
     Optional<PermissionEntity> findByApiPathAndMethod(String apiPath, String method);
+
+    Optional<List<PermissionEntity>> findByRoles(RoleEntity role);
 }

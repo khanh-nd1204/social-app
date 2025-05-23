@@ -65,7 +65,7 @@ public class SecurityConfig {
 
     private SecretKey getSecretKey() {
         byte[] keyBytes = Base64.from(secretKey).decode();
-        return new SecretKeySpec(keyBytes, 0, keyBytes.length, MacAlgorithm.HS512.getName());
+        return new SecretKeySpec(keyBytes, MacAlgorithm.HS256.getName());
     }
 
     @Bean
@@ -76,7 +76,7 @@ public class SecurityConfig {
     @Bean
     public JwtDecoder jwtDecoder() {
         NimbusJwtDecoder jwtDecoder =
-                NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(MacAlgorithm.HS512).build();
+                NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(MacAlgorithm.HS256).build();
         return token -> {
             try {
                 return jwtDecoder.decode(token);

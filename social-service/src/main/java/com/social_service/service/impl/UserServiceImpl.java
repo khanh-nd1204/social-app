@@ -1,6 +1,7 @@
 package com.social_service.service.impl;
 
 import com.social_service.constant.Message;
+import com.social_service.constant.Role;
 import com.social_service.constant.User;
 import com.social_service.exception.NotFoundException;
 import com.social_service.mapper.UserMapper;
@@ -73,7 +74,7 @@ public class UserServiceImpl implements UserService {
             throw new DataIntegrityViolationException(Translator.toLocale(Message.USER_EXISTS.getKey(), null));
         }
 
-        systemLogService.createLog(user.getEmail(), Message.CREATE.getKey(), Message.USER_CREATE_SUCCESS.getKey());
+        systemLogService.createLog(user.getId(), Message.CREATE.getKey(), Message.USER_CREATE_SUCCESS.getKey());
 
         return userMapper.toResponse(user);
     }
@@ -99,13 +100,13 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        systemLogService.createLog(user.getEmail(), Message.UPDATE.getKey(), Message.USER_UPDATE_SUCCESS.getKey());
+        systemLogService.createLog(user.getId(), Message.UPDATE.getKey(), Message.USER_UPDATE_SUCCESS.getKey());
     }
 
     @Override
     @Transactional(readOnly = true)
     public UserResponse getUserById(String id) throws Exception {
-        log.info("Retrieving user {}", id);
+        log.info("Retrieving user by id {}", id);
 
         UserEntity user = userRepository.findById(id).orElseThrow(() ->
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
@@ -148,9 +149,11 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setActive(false);
+        RoleEntity role = roleRepository.findByName(Role.LOCKED.getName()).orElse(null);
+        user.setRole(role);
         userRepository.save(user);
 
-        systemLogService.createLog(user.getEmail(), Message.LOCK.getKey(), Message.USER_LOCK_SUCCESS.getKey());
+        systemLogService.createLog(user.getId(), Message.LOCK.getKey(), Message.USER_LOCK_SUCCESS.getKey());
     }
 
     @Override
@@ -160,19 +163,21 @@ public class UserServiceImpl implements UserService {
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
 
         if (user.getActive()) {
-            throw new BadRequestException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
+            throw new BadRequestException(Translator.toLocale(Message.ACCOUNT_ACTIVE.getKey(), null));
         }
 
-        user.setActive(false);
+        user.setActive(true);
+        RoleEntity role = roleRepository.findByName(Role.USER.getName()).orElse(null);
+        user.setRole(role);
         userRepository.save(user);
 
-        systemLogService.createLog(user.getEmail(), Message.UNLOCK.getKey(), Message.USER_UNLOCK_SUCCESS.getKey());
+        systemLogService.createLog(user.getId(), Message.UNLOCK.getKey(), Message.USER_UNLOCK_SUCCESS.getKey());
     }
 
     @Override
     @Transactional(readOnly = true)
     public UserEntity getUserByEmail(String email) {
-        log.info("Retrieving user {}", email);
+        log.info("Retrieving user by email {}", email);
 
         return userRepository.findByEmail(email).orElseThrow(() ->
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null))
@@ -180,8 +185,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateToken(String id, String token) {
-        log.info("Updating id: {} & token {}", id, token);
+    public void updateRefreshToken(String id, String token) {
+        log.info("Updating token {}", token);
 
         UserEntity user = userRepository.findById(id).orElseThrow(() ->
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
@@ -193,10 +198,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserEntity getUserByEmailAndRefreshToken(String email, String refreshToken) {
-        log.info("Retrieving user {}", email);
+    public UserEntity getUserByRefreshToken(String refreshToken) {
+        log.info("Retrieving user by refresh token {}", refreshToken);
 
-        return userRepository.findByEmailAndRefreshToken(email, refreshToken).orElseThrow(() ->
+        return userRepository.findByRefreshToken(refreshToken).orElseThrow(() ->
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null))
         );
     }
@@ -222,7 +227,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         systemLogService.createLog(
-                null,
+                user.getId(),
                 Message.PASSWORD_CHANGE.getKey(),
                 Message.PASSWORD_CHANGE_SUCCESS.getKey()
         );

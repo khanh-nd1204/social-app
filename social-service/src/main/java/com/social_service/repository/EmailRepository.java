@@ -7,11 +7,14 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EmailRepository extends JpaRepository<EmailEntity, Integer> {
 
-    List<EmailEntity> findByStatusAndDurationIsBefore(EmailStatus status, Instant duration);
+    Optional<List<EmailEntity>> findByStatusAndDurationIsBefore(EmailStatus status, Instant duration);
 
-    List<EmailEntity> findByStatusOrDurationIsAfter(EmailStatus status, Instant duration);
+    Optional<List<EmailEntity>> findByStatusOrDurationIsAfter(EmailStatus status, Instant duration);
+
+    Boolean existsByRecipientAndStatusAndDurationIsBefore(String recipient, EmailStatus status, Instant duration);
 }

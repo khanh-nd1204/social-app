@@ -4,6 +4,7 @@ import com.social_service.constant.Message;
 import com.social_service.model.entity.UserEntity;
 import com.social_service.model.request.UserRequest;
 import com.social_service.model.response.ApiResponse;
+import com.social_service.model.response.UserResponse;
 import com.social_service.service.UserService;
 import com.social_service.util.ApiResponseUtil;
 import com.social_service.util.Translator;
@@ -38,10 +39,11 @@ public class UserController {
     @PostMapping(headers = "apiVersion=v1.0")
     public ResponseEntity<ApiResponse<Object>> create(@Validated(OnCreate.class) @RequestBody UserRequest request)
             throws Exception {
+        UserResponse response = userService.createUser(request);
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.CREATED,
-                Translator.toLocale(Message.USER_CREATE_SUCCESS.getKey(), null),
-                userService.createUser(request)
+                Translator.toLocale(Message.USER_CREATE_SUCCESS.getKey(), response.getId()),
+                response
         );
     }
 
@@ -51,8 +53,8 @@ public class UserController {
             throws Exception {
         userService.updateUser(request);
         return ApiResponseUtil.buildSuccessResponse(
-                HttpStatus.NO_CONTENT,
-                Translator.toLocale(Message.USER_UPDATE_SUCCESS.getKey(), null),
+                HttpStatus.OK,
+                Translator.toLocale(Message.USER_UPDATE_SUCCESS.getKey(), request.getId()),
                 null
         );
     }
@@ -73,7 +75,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<Object>> getById(@PathVariable String id) throws Exception {
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.OK,
-                Translator.toLocale(Message.USER_GET_SUCCESS.getKey(), null),
+                Translator.toLocale(Message.USER_GET_SUCCESS.getKey(), id),
                 userService.getUserById(id)
         );
     }
@@ -83,8 +85,8 @@ public class UserController {
     public ResponseEntity<ApiResponse<Object>> lock(@PathVariable String id) throws Exception {
         userService.lockUser(id);
         return ApiResponseUtil.buildSuccessResponse(
-                HttpStatus.NO_CONTENT,
-                Translator.toLocale(Message.USER_LOCK_SUCCESS.getKey(), null),
+                HttpStatus.OK,
+                Translator.toLocale(Message.USER_LOCK_SUCCESS.getKey(), id),
                 null
         );
     }
@@ -94,8 +96,8 @@ public class UserController {
     public ResponseEntity<ApiResponse<Object>> unLock(@PathVariable String id) throws Exception {
         userService.unLockUser(id);
         return ApiResponseUtil.buildSuccessResponse(
-                HttpStatus.NO_CONTENT,
-                Translator.toLocale(Message.USER_UNLOCK_SUCCESS.getKey(), null),
+                HttpStatus.OK,
+                Translator.toLocale(Message.USER_UNLOCK_SUCCESS.getKey(), id),
                 null
         );
     }
@@ -106,8 +108,8 @@ public class UserController {
             @Validated(OnChangePassword.class) @RequestBody UserRequest request) throws Exception {
         userService.changePassword(request);
         return ApiResponseUtil.buildSuccessResponse(
-                HttpStatus.NO_CONTENT,
-                Translator.toLocale(Message.PASSWORD_CHANGE_SUCCESS.getKey(), null),
+                HttpStatus.OK,
+                Translator.toLocale(Message.PASSWORD_CHANGE_SUCCESS.getKey(), request.getId()),
                 null
         );
     }

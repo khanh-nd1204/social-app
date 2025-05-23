@@ -1,6 +1,7 @@
 package com.social_service.util;
 
 import com.nimbusds.jose.util.Base64;
+import com.social_service.constant.TokenType;
 import com.social_service.model.entity.UserEntity;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,14 @@ public class SecurityUtil {
     @Value("${jwt.secret-key}")
     @NonFinal
     String secretKey;
+
+    @Value("${jwt.access-token-duration}")
+    @NonFinal
+    Long accessTokenDuration;
+
+    @Value("${jwt.refresh-token-duration}")
+    @NonFinal
+    Long refreshTokenDuration;
 
     public static Optional<String> getCurrentUserLogin() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
@@ -77,32 +86,51 @@ public class SecurityUtil {
         return Optional.empty();
     }
 
-    public String createToken(UserEntity user, Long tokenValidity) {
+    public String createAccessToken(UserEntity user) {
         Instant now = Instant.now();
-        Instant validity = now.plus(tokenValidity, ChronoUnit.SECONDS);
-        JwtClaimsSet claims =
-                JwtClaimsSet.builder()
-                        .issuedAt(now)
-                        .expiresAt(validity)
-                        .issuer("server")
-                        .subject(user.getEmail())
-                        .id(UUID.randomUUID().toString())
-                        .claim("role", user.getRole().getName())
-                        .claim("userId", user.getId())
-                        .build();
-        JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS512).build();
+        Instant validity = now.plus(accessTokenDuration, ChronoUnit.SECONDS);
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuedAt(now)
+                .expiresAt(validity)
+                .issuer("server")
+                .subject(user.getEmail())
+                .id(UUID.randomUUID().toString())
+                .claim("role", user.getRole().getName())
+                .claim("userId", user.getId())
+                .claim("type", TokenType.ACCESS_TOKEN)
+                .build();
+
+        JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
+
+        return jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
+    }
+
+    public String createRefreshToken() {
+        Instant now = Instant.now();
+        Instant validity = now.plus(refreshTokenDuration, ChronoUnit.SECONDS);
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuedAt(now)
+                .expiresAt(validity)
+                .issuer("server")
+                .id(UUID.randomUUID().toString())
+                .claim("type", TokenType.REFRESH_TOKEN)
+                .build();
+
+        JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
 
         return jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
     }
 
     private SecretKey getSecretKey() {
         byte[] keyBytes = Base64.from(secretKey).decode();
-        return new SecretKeySpec(keyBytes, 0, keyBytes.length, MacAlgorithm.HS512.getName());
+        return new SecretKeySpec(keyBytes, MacAlgorithm.HS256.getName());
     }
 
     public Jwt checkValidRefreshToken(String token) {
         NimbusJwtDecoder jwtDecoder =
-                NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(MacAlgorithm.HS512).build();
+                NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(MacAlgorithm.HS256).build();
         try {
             return jwtDecoder.decode(token);
         } catch (Exception e) {

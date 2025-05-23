@@ -24,12 +24,8 @@ public enum Message {
     EMAIL_INVALID("user.email.invalid"),
     PHONE_EXISTS("user.phone.exists"),
     USER_LOCK_SUCCESS("user.lock.success"),
-    USER_LOCK_FAILED("user.lock.failed"),
+    USER_LOCK_FAILED("user.lock.fail"),
     USER_UNLOCK_SUCCESS("user.unlock.success"),
-    USER_VERIFIED("user.verified"),
-    USER_UNVERIFIED("user.unverified"),
-    USER_VERIFIED_SUCCESS("user.verified.success"),
-    EMAIL_SEND_SUCCESS("email.send.success"),
 
     // === PASSWORD ===
     PASSWORD_INCORRECT("password.incorrect"),
@@ -65,11 +61,15 @@ public enum Message {
     // === OTP ===
     OTP_INVALID("otp.invalid"),
     OTP_EXPIRED("otp.expired"),
+    OTP_SEND_SUCCESS("otp.send.success"),
 
     // === ACCOUNT ===
     ACCOUNT_LOCKED("account.locked"),
     ACCOUNT_UNVERIFIED("account.unverified"),
     ACCOUNT_INVALID("account.invalid"),
+    ACCOUNT_ACTIVE("account.active"),
+    ACCOUNT_VERIFIED("account.verified"),
+    ACCOUNT_VERIFIED_SUCCESS("account.verified.success"),
 
     // === SYSTEM / COMMON ===
     ERROR("error"),
@@ -91,6 +91,7 @@ public enum Message {
     CLEAN("operation.clean"),
     CLEAN_SUCCESS("clean.success"),
     VERIFY("operation.verify"),
+    LOG_SEARCH_SUCCESS("log.search.success"),
     ;
 
     private final String key;

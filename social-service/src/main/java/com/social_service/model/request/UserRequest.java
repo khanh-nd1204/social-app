@@ -8,14 +8,14 @@ import com.social_service.validation.group.OnChangePassword;
 import com.social_service.validation.group.OnCreate;
 import com.social_service.validation.group.OnUpdate;
 import jakarta.validation.constraints.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 
 @Getter
+@Setter
+@Builder
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserRequest {
@@ -28,7 +28,7 @@ public class UserRequest {
     @JsonDeserialize(using = StringDeserializer.class)
     String name;
 
-    @NotBlank(groups = OnCreate.class, message = "email.required}")
+    @NotBlank(groups = OnCreate.class, message = "{email.required}")
     @Email(message = "{email.invalid}")
     @JsonDeserialize(using = StringDeserializer.class)
     String email;
@@ -50,12 +50,13 @@ public class UserRequest {
     @NotNull(groups = {OnCreate.class, OnUpdate.class}, message = "{gender.required}")
     Gender gender;
 
-    @NotBlank(groups = {OnUpdate.class}, message = "{bio.required}")
-    @Size(min = 10, max = 1000, message = "{bio.length}")
+    //    @NotBlank(groups = {OnUpdate.class}, message = "{bio.required}")
+    @Size(groups = {OnUpdate.class}, max = 1000, message = "{bio.length}")
     @JsonDeserialize(using = StringDeserializer.class)
     String bio;
 
-    @NotBlank(groups = {OnUpdate.class}, message = "{avatar.required}")
+    //    @NotBlank(groups = {OnUpdate.class}, message = "{avatar.required}")
+    @Size(groups = {OnUpdate.class}, max = 1000, message = "{avatar.length}")
     @JsonDeserialize(using = StringDeserializer.class)
     String avatar;
 
@@ -63,7 +64,7 @@ public class UserRequest {
     @BirthDate(message = "{birth_date.invalid}")
     LocalDate birthDate;
 
-    @NotBlank(groups = {OnCreate.class, OnUpdate.class}, message = "{role.required")
+    @NotNull(groups = {OnCreate.class, OnUpdate.class}, message = "{role.required}")
     Integer roleId;
 
     @NotBlank(groups = OnChangePassword.class, message = "{new_password.required}")

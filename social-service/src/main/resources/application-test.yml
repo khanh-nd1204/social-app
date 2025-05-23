@@ -33,6 +33,6 @@ openapi:
     version: 1.0.0
 
 jwt:
-  secret-key: ${SECRET_KEY:test}
+  secret-key: ${SECRET_KEY}
   access-token-duration: 86400
   refresh-token-duration: 864000

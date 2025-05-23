@@ -6,15 +6,13 @@ import com.social_service.util.StringDeserializer;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 
 @Getter
+@Setter
 @Builder
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)

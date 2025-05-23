@@ -4,6 +4,7 @@ import com.social_service.constant.Message;
 import com.social_service.model.entity.PermissionEntity;
 import com.social_service.model.request.PermissionRequest;
 import com.social_service.model.response.ApiResponse;
+import com.social_service.model.response.PermissionResponse;
 import com.social_service.service.PermissionService;
 import com.social_service.util.ApiResponseUtil;
 import com.social_service.util.Translator;
@@ -38,10 +39,11 @@ public class PermissionController {
     @PostMapping(headers = "apiVersion=v1.0")
     public ResponseEntity<ApiResponse<Object>> create(@Validated(OnCreate.class) @RequestBody PermissionRequest request)
             throws Exception {
+        PermissionResponse response = permissionService.createPermission(request);
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.CREATED,
-                Translator.toLocale(Message.PERMISSION_CREATE_SUCCESS.getKey(), null),
-                permissionService.createPermission(request)
+                Translator.toLocale(Message.PERMISSION_CREATE_SUCCESS.getKey(), response.getId()),
+                response
         );
     }
 
@@ -51,8 +53,8 @@ public class PermissionController {
             throws Exception {
         permissionService.updatePermission(request);
         return ApiResponseUtil.buildSuccessResponse(
-                HttpStatus.NO_CONTENT,
-                Translator.toLocale(Message.PERMISSION_UPDATE_SUCCESS.getKey(), null),
+                HttpStatus.OK,
+                Translator.toLocale(Message.PERMISSION_UPDATE_SUCCESS.getKey(), request.getId()),
                 null
         );
     }
@@ -73,7 +75,7 @@ public class PermissionController {
     public ResponseEntity<ApiResponse<Object>> getById(@PathVariable Integer id) throws Exception {
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.OK,
-                Translator.toLocale(Message.PERMISSION_GET_SUCCESS.getKey(), null),
+                Translator.toLocale(Message.PERMISSION_GET_SUCCESS.getKey(), id),
                 permissionService.getPermissionById(id)
         );
     }
@@ -83,8 +85,8 @@ public class PermissionController {
     public ResponseEntity<ApiResponse<Object>> delete(@PathVariable Integer id) throws Exception {
         permissionService.deletePermission(id);
         return ApiResponseUtil.buildSuccessResponse(
-                HttpStatus.RESET_CONTENT,
-                Translator.toLocale(Message.PERMISSION_DELETE_SUCCESS.getKey(), null),
+                HttpStatus.OK,
+                Translator.toLocale(Message.PERMISSION_DELETE_SUCCESS.getKey(), id),
                 null
         );
     }

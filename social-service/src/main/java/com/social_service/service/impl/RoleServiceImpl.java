@@ -65,7 +65,7 @@ public class RoleServiceImpl implements RoleService {
             throw new DataIntegrityViolationException(Translator.toLocale(Message.ROLE_EXISTS.getKey(), null));
         }
 
-        systemLogService.createLog(role.getName(), Message.CREATE.getKey(), Message.ROLE_CREATE_SUCCESS.getKey());
+        systemLogService.createLog(role.getId(), Message.CREATE.getKey(), Message.ROLE_CREATE_SUCCESS.getKey());
 
         return roleMapper.toResponse(role);
     }
@@ -92,7 +92,7 @@ public class RoleServiceImpl implements RoleService {
 
         roleRepository.save(role);
 
-        systemLogService.createLog(role.getName(), Message.UPDATE.getKey(), Message.ROLE_UPDATE_SUCCESS.getKey());
+        systemLogService.createLog(role.getId(), Message.UPDATE.getKey(), Message.ROLE_UPDATE_SUCCESS.getKey());
     }
 
     @Override
@@ -136,6 +136,6 @@ public class RoleServiceImpl implements RoleService {
 
         roleRepository.deleteById(id);
 
-        systemLogService.createLog(role.getName(), Message.DELETE.getKey(), Message.ROLE_DELETE_SUCCESS.getKey());
+        systemLogService.createLog(role.getId(), Message.DELETE.getKey(), Message.ROLE_DELETE_SUCCESS.getKey());
     }
 }

@@ -68,10 +68,14 @@ public class PermissionServiceImpl implements PermissionService {
                 roleRepository.save(roleAdmin);
             }
         } catch (DataIntegrityViolationException e) {
-            throw new DataIntegrityViolationException(Translator.toLocale(Message.PERMISSION_EXISTS.getKey(), null));
+            throw new DataIntegrityViolationException(
+                    Translator.toLocale(Message.PERMISSION_EXISTS.getKey(), null)
+            );
         }
 
-        systemLogService.createLog(permission.getName(), Message.CREATE.getKey(), Message.PERMISSION_CREATE_SUCCESS.getKey());
+        systemLogService.createLog(
+                permission.getId(), Message.CREATE.getKey(), Message.PERMISSION_CREATE_SUCCESS.getKey()
+        );
 
         return permissionMapper.toResponse(permission);
     }
@@ -99,7 +103,7 @@ public class PermissionServiceImpl implements PermissionService {
         permissionMapper.updateEntity(permission, request);
         permissionRepository.save(permission);
 
-        systemLogService.createLog(permission.getName(), Message.UPDATE.getKey(), Message.PERMISSION_UPDATE_SUCCESS.getKey());
+        systemLogService.createLog(permission.getId(), Message.UPDATE.getKey(), Message.PERMISSION_UPDATE_SUCCESS.getKey());
     }
 
     @Override
@@ -121,7 +125,7 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     @Transactional(readOnly = true)
     public PermissionResponse getPermissionById(Integer id) throws Exception {
-        log.info("Retrieving permissison {}", id);
+        log.info("Retrieving permission {}", id);
 
         PermissionEntity permission = permissionRepository.findById(id).orElseThrow(() ->
                 new NotFoundException(Translator.toLocale(Message.PERMISSION_NOT_FOUND.getKey(), null)));
@@ -142,6 +146,10 @@ public class PermissionServiceImpl implements PermissionService {
 
         permissionRepository.deleteById(id);
 
-        systemLogService.createLog(permission.getName(), Message.DELETE.getKey(), Message.PERMISSION_DELETE_SUCCESS.getKey());
+        log.info("Permission {} deleted", permission.getName());
+
+        systemLogService.createLog(
+                permission.getId(), Message.DELETE.getKey(), Message.PERMISSION_DELETE_SUCCESS.getKey()
+        );
     }
 }

@@ -68,14 +68,10 @@ public class GlobalExceptionHandler {
     // Xử lý lỗi yêu cầu không hợp lệ (400)
     @ExceptionHandler({
             BadRequestException.class,
-            MissingRequestCookieException.class,
             IllegalArgumentException.class,
             HttpRequestMethodNotSupportedException.class,
             DataIntegrityViolationException.class,
-            PropertyReferenceException.class,
-            InvalidDataAccessApiUsageException.class,
             NullPointerException.class,
-            HttpMessageNotReadableException.class,
             DisabledException.class
     })
     public ResponseEntity<ApiResponse<Object>> handleBadRequestException(Exception e) {
@@ -114,7 +110,12 @@ public class GlobalExceptionHandler {
     }
 
     // Xử lý lỗi kiểu dữ liệu không đúng trong request (400)
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            InvalidDataAccessApiUsageException.class,
+            PropertyReferenceException.class,
+            HttpMessageNotReadableException.class,
+    })
     public ResponseEntity<ApiResponse<Object>> handleTypeMismatchException() {
         return ApiResponseUtil.buildErrorResponse(
                 HttpStatus.BAD_REQUEST,
@@ -124,7 +125,11 @@ public class GlobalExceptionHandler {
     }
 
     // Xử lý lỗi thiếu tham số request (400)
-    @ExceptionHandler({MissingServletRequestParameterException.class, MissingServletRequestPartException.class})
+    @ExceptionHandler({
+            MissingServletRequestParameterException.class,
+            MissingServletRequestPartException.class,
+            MissingRequestCookieException.class,
+    })
     public ResponseEntity<ApiResponse<Object>> handleMissingParameterException() {
         return ApiResponseUtil.buildErrorResponse(
                 HttpStatus.BAD_REQUEST,

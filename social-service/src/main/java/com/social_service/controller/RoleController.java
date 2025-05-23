@@ -4,6 +4,7 @@ import com.social_service.constant.Message;
 import com.social_service.model.entity.RoleEntity;
 import com.social_service.model.request.RoleRequest;
 import com.social_service.model.response.ApiResponse;
+import com.social_service.model.response.RoleResponse;
 import com.social_service.service.RoleService;
 import com.social_service.util.ApiResponseUtil;
 import com.social_service.util.Translator;
@@ -38,10 +39,11 @@ public class RoleController {
     @PostMapping(headers = "apiVersion=v1.0")
     public ResponseEntity<ApiResponse<Object>> create(@Validated(OnCreate.class) @RequestBody RoleRequest request)
             throws Exception {
+        RoleResponse response = roleService.createRole(request);
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.CREATED,
-                Translator.toLocale(Message.ROLE_CREATE_SUCCESS.getKey(), null),
-                roleService.createRole(request)
+                Translator.toLocale(Message.ROLE_CREATE_SUCCESS.getKey(), response.getId()),
+                response
         );
     }
 
@@ -51,8 +53,8 @@ public class RoleController {
             throws Exception {
         roleService.updateRole(request);
         return ApiResponseUtil.buildSuccessResponse(
-                HttpStatus.NO_CONTENT,
-                Translator.toLocale(Message.ROLE_UPDATE_SUCCESS.getKey(), null),
+                HttpStatus.OK,
+                Translator.toLocale(Message.ROLE_UPDATE_SUCCESS.getKey(), request.getId()),
                 null
         );
     }
@@ -73,7 +75,7 @@ public class RoleController {
     public ResponseEntity<ApiResponse<Object>> getById(@PathVariable Integer id) throws Exception {
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.OK,
-                Translator.toLocale(Message.ROLE_GET_SUCCESS.getKey(), null),
+                Translator.toLocale(Message.ROLE_GET_SUCCESS.getKey(), id),
                 roleService.getRoleById(id)
         );
     }
@@ -83,8 +85,8 @@ public class RoleController {
     public ResponseEntity<ApiResponse<Object>> delete(@PathVariable Integer id) throws Exception {
         roleService.deleteRole(id);
         return ApiResponseUtil.buildSuccessResponse(
-                HttpStatus.RESET_CONTENT,
-                Translator.toLocale(Message.ROLE_DELETE_SUCCESS.getKey(), null),
+                HttpStatus.OK,
+                Translator.toLocale(Message.ROLE_DELETE_SUCCESS.getKey(), id),
                 null
         );
     }

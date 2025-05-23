@@ -25,9 +25,9 @@ public interface UserService {
 
     UserEntity getUserByEmail(String email);
 
-    void updateToken(String id, String token);
+    void updateRefreshToken(String id, String token);
 
-    UserEntity getUserByEmailAndRefreshToken(String email, String refreshToken);
+    UserEntity getUserByRefreshToken(String refreshToken);
 
     void changePassword(UserRequest request) throws Exception;
 }

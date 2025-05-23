@@ -9,14 +9,14 @@ import com.social_service.validation.group.OnRegister;
 import com.social_service.validation.group.OnResetPassword;
 import com.social_service.validation.group.OnVerify;
 import jakarta.validation.constraints.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 
 @Getter
+@Setter
+@Builder
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuthRequest {
@@ -35,7 +35,7 @@ public class AuthRequest {
     String confirmPassword;
 
     @NotBlank(groups = OnRegister.class, message = "{user_name.required}")
-    @Size(min = 5, max = 100, message = "{user_name.length}")
+    @Size(min = 6, max = 100, message = "{user_name.length}")
     @JsonDeserialize(using = StringDeserializer.class)
     String name;
 

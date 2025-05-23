@@ -121,12 +121,14 @@ public class EmailServiceImpl implements EmailService {
         log.info("Email process request");
 
         List<EmailEntity> emails =
-                emailRepository.findByStatusAndDurationIsBefore(EmailStatus.PENDING, Instant.now());
+                emailRepository.findByStatusAndDurationIsBefore(EmailStatus.PENDING, Instant.now()).orElse(null);
 
-        if (emails.isEmpty()) {
+        if (emails == null || emails.isEmpty()) {
             log.info("No pending emails to process.");
             return;
         }
+
+        log.info("Emails processed: {}", emails.size());
 
         List<EmailEntity> toUpdate = new ArrayList<>();
         List<EmailEntity> toDelete = new ArrayList<>();
@@ -169,7 +171,11 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void cleanEmails() throws Exception {
         List<EmailEntity> emails =
-                emailRepository.findByStatusOrDurationIsAfter(EmailStatus.SENT, Instant.now());
+                emailRepository.findByStatusOrDurationIsAfter(EmailStatus.SENT, Instant.now()).orElse(null);
+        if (emails == null || emails.isEmpty()) {
+            return;
+        }
+
         emailRepository.deleteAll(emails);
         systemLogService.createLog("email", Message.CLEAN.getKey(), Message.CLEAN_SUCCESS.getKey());
     }

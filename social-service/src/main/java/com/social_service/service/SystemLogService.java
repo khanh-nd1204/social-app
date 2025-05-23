@@ -13,7 +13,7 @@ public interface SystemLogService {
     PageResponse<List<SystemLogResponse>> searchLogs(Specification<SystemLogEntity> spec, Pageable pageable)
             throws Exception;
 
-    void createLog(String params, String action, String description) throws Exception;
+    void createLog(Object params, String action, String description) throws Exception;
 
     void cleanLogs() throws Exception;
 }

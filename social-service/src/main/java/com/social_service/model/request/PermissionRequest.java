@@ -7,12 +7,12 @@ import com.social_service.validation.group.OnUpdate;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Getter
+@Setter
+@Builder
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PermissionRequest {

@@ -1,5 +1,6 @@
 package com.social_service.service.impl;
 
+import com.social_service.constant.EmailStatus;
 import com.social_service.constant.EmailType;
 import com.social_service.constant.Message;
 import com.social_service.constant.Role;
@@ -11,6 +12,7 @@ import com.social_service.model.entity.UserEntity;
 import com.social_service.model.request.AuthRequest;
 import com.social_service.model.request.EmailRequest;
 import com.social_service.model.response.AuthResponse;
+import com.social_service.repository.EmailRepository;
 import com.social_service.repository.InvalidatedTokenRepository;
 import com.social_service.repository.RoleRepository;
 import com.social_service.repository.UserRepository;
@@ -76,13 +78,7 @@ public class AuthServiceImpl implements AuthService {
 
     EmailService emailService;
 
-    @Value("${jwt.access-token-duration}")
-    @NonFinal
-    Long accessTokenDuration;
-
-    @Value("${jwt.refresh-token-duration}")
-    @NonFinal
-    Long refreshTokenDuration;
+    EmailRepository emailRepository;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     @NonFinal
@@ -127,14 +123,15 @@ public class AuthServiceImpl implements AuthService {
 
         checkUserValid(user);
 
-        String refreshToken = securityUtil.createToken(user, refreshTokenDuration);
-        userService.updateToken(user.getId(), refreshToken);
+        String refreshToken = securityUtil.createRefreshToken();
+        userService.updateRefreshToken(user.getId(), refreshToken);
 
         systemLogService.createLog(null, Message.LOGIN.getKey(), Message.LOGIN_SUCCESS.getKey());
 
         return AuthResponse.builder()
-                .accessToken(securityUtil.createToken(user, accessTokenDuration))
+                .accessToken(securityUtil.createAccessToken(user))
                 .refreshToken(refreshToken)
+                .authorities(authenticationToken.getAuthorities().stream().toList())
                 .build();
     }
 
@@ -143,7 +140,10 @@ public class AuthServiceImpl implements AuthService {
     public void register(AuthRequest request) throws Exception {
         log.info("Register request: {}", request.toString());
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        UserEntity userByEmail = userRepository.findByEmail(request.getEmail()).orElse(null);
+
+        if (userByEmail != null) {
+            checkUserValid(userByEmail);
             throw new BadRequestException(Translator.toLocale(Message.EMAIL_EXISTS.getKey(), null));
         }
 
@@ -154,7 +154,7 @@ public class AuthServiceImpl implements AuthService {
                 .birthDate(request.getBirthDate())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .verified(false)
-                .active(true)
+                .active(false)
                 .build();
 
         RoleEntity role = roleRepository.findByName(Role.USER.getName()).orElseThrow(() ->
@@ -180,19 +180,20 @@ public class AuthServiceImpl implements AuthService {
         );
 
         if (user.getVerified()) {
-            throw new BadRequestException(Translator.toLocale(Message.USER_VERIFIED.getKey(), null));
+            throw new BadRequestException(Translator.toLocale(Message.ACCOUNT_VERIFIED.getKey(), null));
         }
 
-        if (!user.getActive()) {
-            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
-        }
+//        if (!user.getActive()) {
+//            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
+//        }
 
         verifyOtp(user, request.getOtp());
 
         user.setVerified(true);
+        user.setActive(true);
         userRepository.save(user);
 
-        systemLogService.createLog(user.getName(), Message.VERIFY.getKey(), Message.USER_VERIFIED_SUCCESS.getKey());
+        systemLogService.createLog(null, Message.VERIFY.getKey(), Message.ACCOUNT_VERIFIED_SUCCESS.getKey());
     }
 
     @Override
@@ -204,16 +205,16 @@ public class AuthServiceImpl implements AuthService {
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null))
         );
 
-        if (!user.getActive()) {
-            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
-        }
-
         if (user.getVerified() && request.getType().equals(EmailType.VERIFY_EMAIL)) {
-            throw new BadRequestException(Translator.toLocale(Message.USER_VERIFIED.getKey(), null));
+            throw new BadRequestException(Translator.toLocale(Message.ACCOUNT_VERIFIED.getKey(), null));
         }
 
         if (!user.getVerified() && request.getType().equals(EmailType.RESET_PASSWORD)) {
-            throw new BadRequestException(Translator.toLocale(Message.USER_UNVERIFIED.getKey(), null));
+            throw new BadRequestException(Translator.toLocale(Message.ACCOUNT_UNVERIFIED.getKey(), null));
+        }
+
+        if (!user.getActive() && user.getVerified()) {
+            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
         }
 
         generateOTPAndEmail(user, request.getType());
@@ -250,17 +251,17 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Jwt decodedToken = securityUtil.checkValidRefreshToken(refreshToken);
-        String email = decodedToken.getSubject();
+        log.info("Decode refresh token: {}", decodedToken.toString());
 
-        UserEntity user = userService.getUserByEmailAndRefreshToken(email, refreshToken);
+        UserEntity user = userService.getUserByRefreshToken(refreshToken);
 
         checkUserValid(user);
 
-        String newRefreshToken = securityUtil.createToken(user, refreshTokenDuration);
-        userService.updateToken(user.getId(), newRefreshToken);
+        String newRefreshToken = securityUtil.createRefreshToken();
+        userService.updateRefreshToken(user.getId(), newRefreshToken);
 
         return AuthResponse.builder()
-                .accessToken(securityUtil.createToken(user, accessTokenDuration))
+                .accessToken(securityUtil.createAccessToken(user))
                 .refreshToken(newRefreshToken)
                 .build();
     }
@@ -275,7 +276,7 @@ public class AuthServiceImpl implements AuthService {
         log.info("Logout user: {}", email);
 
         UserEntity user = userService.getUserByEmail(email);
-        userService.updateToken(user.getId(), null);
+        userService.updateRefreshToken(user.getId(), "");
 
         String token = SecurityUtil.getCurrentUserJWT().orElseThrow(() ->
                 new UnauthorizedException(Translator.toLocale(Message.INVALID_TOKEN.getKey(), null)));
@@ -357,49 +358,56 @@ public class AuthServiceImpl implements AuthService {
 
             userRepository.save(newUser);
 
-            String refreshToken = securityUtil.createToken(newUser, refreshTokenDuration);
-            userService.updateToken(newUser.getId(), refreshToken);
+            String refreshToken = securityUtil.createRefreshToken();
+            userService.updateRefreshToken(newUser.getId(), refreshToken);
 
             return AuthResponse.builder()
-                    .accessToken(securityUtil.createToken(newUser, accessTokenDuration))
+                    .accessToken(securityUtil.createAccessToken(newUser))
                     .refreshToken(refreshToken)
                     .build();
         } else {
             checkUserValid(user);
 
-            String refreshToken = securityUtil.createToken(user, refreshTokenDuration);
-            userService.updateToken(user.getId(), refreshToken);
+            String refreshToken = securityUtil.createRefreshToken();
+            userService.updateRefreshToken(user.getId(), refreshToken);
 
             return AuthResponse.builder()
-                    .accessToken(securityUtil.createToken(user, accessTokenDuration))
+                    .accessToken(securityUtil.createAccessToken(user))
                     .refreshToken(refreshToken)
                     .build();
         }
     }
 
     @Override
-    public ResponseCookie buildRefreshTokenCookie(String refreshToken) throws Exception {
+    public ResponseCookie buildRefreshTokenCookie(String refreshToken, Long duration) throws Exception {
         log.info("Build refresh token cookie");
 
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
-                .maxAge(refreshTokenDuration)
+                .maxAge(duration)
                 .build();
     }
 
     public void checkUserValid(UserEntity user) {
-        if (!user.getActive()) {
-            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
-        }
-
         if (!user.getVerified()) {
             throw new DisabledException(Translator.toLocale(Message.ACCOUNT_UNVERIFIED.getKey(), null));
+        }
+
+        if (!user.getActive()) {
+            throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
         }
     }
 
     public void generateOTPAndEmail(UserEntity user, EmailType type) throws Exception {
+        if (emailRepository.existsByRecipientAndStatusAndDurationIsBefore(
+                user.getEmail(), EmailStatus.PENDING, Instant.now())
+        ) {
+            log.info("Email already in pending status: {}", user.getEmail());
+            return;
+        }
+
         log.info("Generate OTP and email");
 
         int otp = new Random().nextInt(900000) + 100000;
