@@ -16,8 +16,10 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -28,6 +30,7 @@ import org.thymeleaf.exceptions.TemplateInputException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +51,10 @@ public class EmailServiceImpl implements EmailService {
     JavaMailSender javaMailSender;
 
     SpringTemplateEngine templateEngine;
+
+    @Value("${spring.mail.duration}")
+    @NonFinal
+    Integer duration;
 
     public boolean sendEmailSync(String to, String subject, String content, boolean isMultipart, boolean isHtml) {
         if (StringUtils.isBlank(to) || StringUtils.isBlank(subject) || StringUtils.isBlank(content)) {
@@ -121,7 +128,9 @@ public class EmailServiceImpl implements EmailService {
         log.info("Email process request");
 
         List<EmailEntity> emails =
-                emailRepository.findByStatusAndDurationIsBefore(EmailStatus.PENDING, Instant.now()).orElse(null);
+                emailRepository.findByStatusAndDurationIsBefore(
+                        EmailStatus.PENDING, Instant.now().plus(Duration.ofSeconds(duration))
+                ).orElse(null);
 
         if (emails == null || emails.isEmpty()) {
             log.info("No pending emails to process.");
@@ -170,8 +179,13 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void cleanEmails() throws Exception {
+        log.info("Clean emails");
+
         List<EmailEntity> emails =
-                emailRepository.findByStatusOrDurationIsAfter(EmailStatus.SENT, Instant.now()).orElse(null);
+                emailRepository.findByStatusOrDurationIsAfter(
+                        EmailStatus.SENT, Instant.now().plus(Duration.ofSeconds(duration))
+                ).orElse(null);
+
         if (emails == null || emails.isEmpty()) {
             return;
         }

@@ -27,7 +27,7 @@ public class UserMapper {
                 .bio(entity.getBio())
                 .avatar(entity.getAvatar())
                 .active(entity.getActive())
-                .roleName(entity.getRole().getName())
+                .roleName(entity.getRole() != null ? entity.getRole().getName() : null)
                 .createdAt(entity.getCreatedAt())
                 .createdBy(entity.getCreatedBy())
                 .updatedAt(entity.getUpdatedAt())

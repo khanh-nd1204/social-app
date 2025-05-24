@@ -2,7 +2,9 @@ package com.social_service.util;
 
 import com.nimbusds.jose.util.Base64;
 import com.social_service.constant.TokenType;
+import com.social_service.model.entity.PermissionEntity;
 import com.social_service.model.entity.UserEntity;
+import com.social_service.repository.PermissionRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,8 +24,11 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +37,8 @@ import java.util.UUID;
 public class SecurityUtil {
 
     JwtEncoder jwtEncoder;
+
+    PermissionRepository permissionRepository;
 
     @Value("${jwt.secret-key}")
     @NonFinal
@@ -96,9 +103,9 @@ public class SecurityUtil {
                 .issuer("server")
                 .subject(user.getEmail())
                 .id(UUID.randomUUID().toString())
-                .claim("role", user.getRole().getName())
                 .claim("userId", user.getId())
                 .claim("type", TokenType.ACCESS_TOKEN)
+                .claim("authorities", getAuthorities(user))
                 .build();
 
         JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
@@ -137,5 +144,25 @@ public class SecurityUtil {
             log.error("JWT decoding failed: {}", e.getMessage());
             throw e;
         }
+    }
+
+    public List<String> getAuthorities(UserEntity user) {
+        List<PermissionEntity> permissions = permissionRepository
+                .findByRoles(user.getRole())
+                .orElse(Collections.emptyList());
+
+        List<String> authorities = permissions.stream()
+                .map(PermissionEntity::getName)
+                .collect(Collectors.toList());
+
+        String roleName = user.getRole().getName();
+        if (!roleName.startsWith("ROLE_")) {
+            roleName = "ROLE_" + roleName;
+        }
+        authorities.add(roleName);
+
+        log.info("Authorities found: {}", authorities);
+
+        return authorities;
     }
 }

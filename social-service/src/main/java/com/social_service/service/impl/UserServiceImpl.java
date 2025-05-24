@@ -14,6 +14,7 @@ import com.social_service.repository.RoleRepository;
 import com.social_service.repository.UserRepository;
 import com.social_service.service.SystemLogService;
 import com.social_service.service.UserService;
+import com.social_service.util.SecurityUtil;
 import com.social_service.util.Translator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +51,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyAuthority('CREATE_USER', 'ROLE_ADMIN')")
     public UserResponse createUser(UserRequest request) throws Exception {
         log.info("Creating user {}", request.toString());
 
@@ -81,8 +85,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyAuthority('UPDATE_USER', 'ROLE_ADMIN')")
     public void updateUser(UserRequest request) throws Exception {
         log.info("Updating user {}", request.toString());
+
+        checkCurrentUser(request.getId());
 
         UserEntity user = userRepository.findById(request.getId()).orElseThrow(() ->
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
@@ -105,17 +112,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyAuthority('GET_USER', 'ROLE_ADMIN')")
     public UserResponse getUserById(String id) throws Exception {
         log.info("Retrieving user by id {}", id);
 
+        checkCurrentUser(id);
+
         UserEntity user = userRepository.findById(id).orElseThrow(() ->
-                new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
+                new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null))
+        );
 
         return userMapper.toResponse(user);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyAuthority('SEARCH_USERS', 'ROLE_ADMIN')")
     public PageResponse<List<UserResponse>> searchUsers(Specification<UserEntity> spec, Pageable pageable) throws Exception {
         log.info("Searching user {}", spec.toString());
 
@@ -136,6 +148,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyAuthority('LOCK_USER', 'ROLE_ADMIN')")
     public void lockUser(String id) throws Exception {
         UserEntity user = userRepository.findById(id).orElseThrow(() ->
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
@@ -149,8 +162,7 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setActive(false);
-        RoleEntity role = roleRepository.findByName(Role.LOCKED.getName()).orElse(null);
-        user.setRole(role);
+        user.setRole(null);
         userRepository.save(user);
 
         systemLogService.createLog(user.getId(), Message.LOCK.getKey(), Message.USER_LOCK_SUCCESS.getKey());
@@ -158,6 +170,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyAuthority('UNLOCK_USER', 'ROLE_ADMIN')")
     public void unLockUser(String id) throws Exception {
         UserEntity user = userRepository.findById(id).orElseThrow(() ->
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
@@ -207,8 +220,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public void changePassword(UserRequest request) throws Exception {
         log.info("Changing password {}", request.toString());
+
+        checkCurrentUser(request.getId());
 
         UserEntity user = userRepository.findById(request.getId()).orElseThrow(() ->
                 new NotFoundException(Translator.toLocale(Message.USER_NOT_FOUND.getKey(), null)));
@@ -231,5 +247,17 @@ public class UserServiceImpl implements UserService {
                 Message.PASSWORD_CHANGE.getKey(),
                 Message.PASSWORD_CHANGE_SUCCESS.getKey()
         );
+    }
+
+    public void checkCurrentUser(String id) throws Exception {
+        String currentUser = SecurityUtil.getCurrentUserLogin().orElse(null);
+
+        if (currentUser != null && !currentUser.equals(User.ADMIN.getEmail())) {
+            String userId = SecurityUtil.getCurrentUserId().orElse(null);
+
+            if (userId == null || !userId.equals(id)) {
+                throw new AccessDeniedException(Translator.toLocale(Message.ACCESS_DENIED.getKey(), null));
+            }
+        }
     }
 }

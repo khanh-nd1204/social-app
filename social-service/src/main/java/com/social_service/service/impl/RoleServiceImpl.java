@@ -23,6 +23,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +47,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyAuthority('CREATE_ROLE', 'ROLE_ADMIN')")
     public RoleResponse createRole(RoleRequest request) throws Exception {
         log.info("Creating request: {}", request.toString());
 
@@ -72,6 +74,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyAuthority('UPDATE_ROLE', 'ROLE_ADMIN')")
     public void updateRole(RoleRequest request) throws Exception {
         log.info("Updating request: {}", request.toString());
 
@@ -97,6 +100,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyAuthority('SEARCH_ROLES', 'ROLE_ADMIN')")
     public PageResponse<List<RoleResponse>> searchRoles(Specification<RoleEntity> spec, Pageable pageable) throws Exception {
         log.info("Searching role: {}", spec.toString());
 
@@ -113,6 +117,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyAuthority('GET_ROLE', 'ROLE_ADMIN')")
     public RoleResponse getRoleById(Integer id) throws Exception {
         log.info("Retrieving role {}", id);
 
@@ -123,6 +128,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('DELETE_ROLE', 'ROLE_ADMIN')")
     public void deleteRole(Integer id) throws Exception {
         log.info("Deleting role {}", id);
 

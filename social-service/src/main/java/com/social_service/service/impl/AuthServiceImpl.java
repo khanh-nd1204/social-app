@@ -12,10 +12,7 @@ import com.social_service.model.entity.UserEntity;
 import com.social_service.model.request.AuthRequest;
 import com.social_service.model.request.EmailRequest;
 import com.social_service.model.response.AuthResponse;
-import com.social_service.repository.EmailRepository;
-import com.social_service.repository.InvalidatedTokenRepository;
-import com.social_service.repository.RoleRepository;
-import com.social_service.repository.UserRepository;
+import com.social_service.repository.*;
 import com.social_service.service.AuthService;
 import com.social_service.service.EmailService;
 import com.social_service.service.SystemLogService;
@@ -35,6 +32,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -49,6 +47,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -79,6 +78,8 @@ public class AuthServiceImpl implements AuthService {
     EmailService emailService;
 
     EmailRepository emailRepository;
+
+    PermissionRepository permissionRepository;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     @NonFinal
@@ -117,6 +118,8 @@ public class AuthServiceImpl implements AuthService {
 
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
+        log.info("Authentication: {}", authentication.toString());
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         UserEntity user = userService.getUserByEmail(request.getUsername());
@@ -131,7 +134,7 @@ public class AuthServiceImpl implements AuthService {
         return AuthResponse.builder()
                 .accessToken(securityUtil.createAccessToken(user))
                 .refreshToken(refreshToken)
-                .authorities(authenticationToken.getAuthorities().stream().toList())
+                .authorities(authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
                 .build();
     }
 
@@ -263,6 +266,7 @@ public class AuthServiceImpl implements AuthService {
         return AuthResponse.builder()
                 .accessToken(securityUtil.createAccessToken(user))
                 .refreshToken(newRefreshToken)
+                .authorities(securityUtil.getAuthorities(user))
                 .build();
     }
 
@@ -340,6 +344,7 @@ public class AuthServiceImpl implements AuthService {
         String email = (String) userBody.get("email");
         String name = (String) userBody.get("name");
         String googleId = (String) userBody.get("sub");
+        String avatar = (String) userBody.get("picture");
 
         UserEntity user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
@@ -354,6 +359,7 @@ public class AuthServiceImpl implements AuthService {
                     .role(role)
                     .verified(true)
                     .active(true)
+                    .avatar(avatar)
                     .build();
 
             userRepository.save(newUser);
@@ -364,6 +370,7 @@ public class AuthServiceImpl implements AuthService {
             return AuthResponse.builder()
                     .accessToken(securityUtil.createAccessToken(newUser))
                     .refreshToken(refreshToken)
+                    .authorities(securityUtil.getAuthorities(newUser))
                     .build();
         } else {
             checkUserValid(user);
@@ -374,6 +381,7 @@ public class AuthServiceImpl implements AuthService {
             return AuthResponse.builder()
                     .accessToken(securityUtil.createAccessToken(user))
                     .refreshToken(refreshToken)
+                    .authorities(securityUtil.getAuthorities(user))
                     .build();
         }
     }

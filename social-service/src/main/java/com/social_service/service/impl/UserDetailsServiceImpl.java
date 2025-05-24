@@ -1,10 +1,9 @@
 package com.social_service.service.impl;
 
 import com.social_service.constant.Message;
-import com.social_service.model.entity.PermissionEntity;
 import com.social_service.model.entity.UserEntity;
-import com.social_service.repository.PermissionRepository;
 import com.social_service.repository.UserRepository;
+import com.social_service.util.SecurityUtil;
 import com.social_service.util.Translator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     UserRepository userRepository;
 
-    PermissionRepository permissionRepository;
+    SecurityUtil securityUtil;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws BadCredentialsException {
@@ -47,19 +46,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new DisabledException(Translator.toLocale(Message.ACCOUNT_LOCKED.getKey(), null));
         }
 
-        List<PermissionEntity> permissions = permissionRepository.findByRoles(user.getRole()).orElse(null);
+        List<String> authorities = securityUtil.getAuthorities(user);
 
-        List<GrantedAuthority> authorities = permissions != null ?
-                permissions.stream().map(permission ->
-                        new SimpleGrantedAuthority(permission.getName())).collect(Collectors.toList())
-                : List.of();
-
-        log.info("Authorities found: {}", authorities);
+        List<GrantedAuthority> grantedAuthorities =
+                authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
 
         return User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
-                .authorities(authorities)
+                .authorities(grantedAuthorities)
                 .build();
     }
 }

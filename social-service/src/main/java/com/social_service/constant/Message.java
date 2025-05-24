@@ -12,6 +12,7 @@ public enum Message {
     LOGOUT_SUCCESS("auth.logout.success"),
     REFRESH_SUCCESS("auth.refresh.success"),
     REGISTER_SUCCESS("auth.register.success"),
+    ACCESS_DENIED("auth.access.denied"),
 
     // === USER ===
     USER_CREATE_SUCCESS("user.create.success"),

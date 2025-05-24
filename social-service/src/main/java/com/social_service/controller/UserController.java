@@ -22,6 +22,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -70,9 +72,13 @@ public class UserController {
         );
     }
 
-    @Operation(summary = "Lấy thông tin người dùng", description = "Lấy thông tin chi tiết của một người dùng theo ID")
+    @Operation(summary = "Lấy thông tin người dùng", description = "Lấy thông tin chi tiết của một người dùng theo email")
     @GetMapping(path = "/{id}", headers = "apiVersion=v1.0")
     public ResponseEntity<ApiResponse<Object>> getById(@PathVariable String id) throws Exception {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("Authentication: " + authentication.getName());
+
         return ApiResponseUtil.buildSuccessResponse(
                 HttpStatus.OK,
                 Translator.toLocale(Message.USER_GET_SUCCESS.getKey(), id),

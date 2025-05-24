@@ -23,6 +23,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +45,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyAuthority('CREATE_PERMISSION', 'ROLE_ADMIN')")
     public PermissionResponse createPermission(PermissionRequest request) throws Exception {
         log.info("Creating request: {}", request.toString());
 
@@ -82,6 +84,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyAuthority('UPDATE_PERMISSION', 'ROLE_ADMIN')")
     public void updatePermission(PermissionRequest request) throws Exception {
         log.info("Updating request: {}", request.toString());
 
@@ -108,6 +111,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyAuthority('SEARCH_PERMISSIONS', 'ROLE_ADMIN')")
     public PageResponse<List<PermissionResponse>> searchPermissions(Specification<PermissionEntity> spec, Pageable pageable) throws Exception {
         log.info("Searching permission: {}", spec.toString());
 
@@ -124,6 +128,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyAuthority('GET_PERMISSION', 'ROLE_ADMIN')")
     public PermissionResponse getPermissionById(Integer id) throws Exception {
         log.info("Retrieving permission {}", id);
 
@@ -134,6 +139,7 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('DELETE_PERMISSION', 'ROLE_ADMIN')")
     public void deletePermission(Integer id) throws Exception {
         log.info("Deleting permission {}", id);
 
